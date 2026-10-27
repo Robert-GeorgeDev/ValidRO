@@ -1,0 +1,40 @@
+{
+  "name": "validro",
+  "version": "0.1.0",
+  "description": "Validate and decode Romanian CNP, CUI/CIF and IBAN, with error messages that explain what is wrong. Zero dependencies.",
+  "keywords": ["romania", "romanian", "cnp", "cui", "cif", "iban", "validator", "validation", "anaf", "typescript"],
+  "license": "MIT",
+  "author": "Robert-GeorgeDev",
+  "homepage": "https://robert-georgedev.github.io/ValidRO/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Robert-GeorgeDev/ValidRO.git"
+  },
+  "bugs": "https://github.com/Robert-GeorgeDev/ValidRO/issues",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+      "require": { "types": "./dist/index.d.cts", "default": "./dist/index.cjs" }
+    }
+  },
+  "files": ["dist"],
+  "sideEffects": false,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "demo": "tsc -p tsconfig.demo.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  }
+}

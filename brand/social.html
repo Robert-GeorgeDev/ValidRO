@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --paper: #EDF1F6; --ink: #13203B; --ink-2: #4A5873; --rule: #B9C5D6; --stamp: #2747C4; --ok: #1D6B45;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 640px; }
+  body {
+    background: var(--paper) url("guilloche.svg") center / 100% 100% no-repeat;
+    color: var(--ink);
+    font-family: "Lora", Georgia, serif;
+    padding: 72px 88px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  .brand { display: flex; align-items: center; gap: 28px; }
+  .brand img { width: 128px; height: 128px; }
+  .word { font-size: 112px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  .tag { margin-top: 18px; font-size: 34px; color: var(--ink-2); max-width: 30ch; line-height: 1.3; }
+  .specimen { display: flex; gap: 18px; align-self: end; }
+  .seg { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .digits {
+    font-family: "Latin Modern Mono", "DejaVu Sans Mono", monospace;
+    font-size: 64px; line-height: 1; padding: 0 4px 12px;
+    border-bottom: 3px solid var(--stamp);
+  }
+  .seg:last-child .digits { color: var(--ok); border-color: var(--ok); }
+  .label { font-size: 21px; font-style: italic; color: var(--ink-2); white-space: nowrap; }
+</style>
+</head>
+<body>
+  <div>
+    <div class="brand">
+      <img src="logo.svg" alt="">
+      <div class="word">ValidRO</div>
+    </div>
+    <p class="tag">Romanian CNP, CUI and IBAN validation that explains every error.</p>
+  </div>
+  <div></div>
+  <div class="specimen" aria-label="A fictitious CNP split into its parts">
+    <div class="seg"><span class="digits">3</span><span class="label">sex, century</span></div>
+    <div class="seg"><span class="digits">00</span><span class="label">year</span></div>
+    <div class="seg"><span class="digits">01</span><span class="label">month</span></div>
+    <div class="seg"><span class="digits">01</span><span class="label">day</span></div>
+    <div class="seg"><span class="digits">22</span><span class="label">county</span></div>
+    <div class="seg"><span class="digits">114</span><span class="label">sequence</span></div>
+    <div class="seg"><span class="digits">7</span><span class="label">check</span></div>
+  </div>
+</body>
+</html>
