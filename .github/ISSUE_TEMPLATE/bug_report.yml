@@ -1,0 +1,33 @@
+name: Wrong result
+description: A code is accepted or rejected when it should not be
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste a real CNP or IBAN.** Change the digits so the example is fictitious but still shows the problem.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Identifier
+      options: [CNP, CUI / CIF, IBAN, Other]
+    validations:
+      required: true
+  - type: input
+    id: input
+    attributes:
+      label: Fictitious input
+      placeholder: "3000101221147"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected and what you got
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: validro version
+      placeholder: "0.1.0"

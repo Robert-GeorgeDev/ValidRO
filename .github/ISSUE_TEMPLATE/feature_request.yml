@@ -1,0 +1,22 @@
+name: New identifier or feature
+description: Suggest a new validator or an improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should validro check?
+      placeholder: For example, Romanian licence plates such as B 123 ABC
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Rules and official source
+      description: Link the law or official documentation that defines the format, if you know it.
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contributing
+      options:
+        - label: I would like to open a pull request for this
