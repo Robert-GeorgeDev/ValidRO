@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ValidRO · verifică CNP, CUI și IBAN</title>
+<meta name="description" content="Verifică un CNP, un CUI sau un IBAN românesc și vezi ce înseamnă fiecare cifră. Rulează în browser, nimic nu e trimis.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ValidRO · verifică CNP, CUI și IBAN">
+<meta property="og:description" content="Vezi ce înseamnă fiecare cifră și cum se calculează cifra de control. Local, fără server.">
+<meta property="og:url" content="https://robert-georgedev.github.io/ValidRO/">
+<meta property="og:image" content="https://robert-georgedev.github.io/ValidRO/social-preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#EDF1F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1728" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EDF1F6;
+    --sheet: #F8FAFC;
+    --ink: #13203B;
+    --ink-2: #4A5873;
+    --rule: #C9D3E0;
+    --stamp: #2747C4;
+    --stamp-soft: #DCE3F8;
+    --ok: #1D6B45;
+    --bad: #B42318;
+    --serif: "Lora", Georgia, "Times New Roman", serif;
+    --mono: "Atkinson Hyperlegible Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0F1728; --sheet: #16213A; --ink: #E7ECF4; --ink-2: #9AA8C0;
+      --rule: #2A3756; --stamp: #8DA2FF; --stamp-soft: #222F55; --ok: #5CCB95; --bad: #FF8E80;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0F1728; --sheet: #16213A; --ink: #E7ECF4; --ink-2: #9AA8C0;
+    --rule: #2A3756; --stamp: #8DA2FF; --stamp-soft: #222F55; --ok: #5CCB95; --bad: #FF8E80;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 18px/1.6 var(--serif); }
+  main { max-width: 780px; margin: 0 auto; padding: 28px 20px 40px; }
+  a { color: var(--stamp); text-underline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--stamp); outline-offset: 3px; border-radius: 3px; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  button { font: inherit; color: inherit; }
+
+  /* Top bar */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; }
+  .brand { display: flex; align-items: center; gap: 14px; text-decoration: none; color: var(--ink); }
+  .brand svg { width: 56px; height: 56px; flex: none; color: var(--stamp); }
+  .brand h1 { margin: 0; font-size: 2.9rem; line-height: 1; letter-spacing: -0.02em; }
+  .star {
+    display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px;
+    border: 1px solid var(--rule); border-radius: 999px; background: var(--sheet);
+    color: var(--ink); text-decoration: none; font-size: 0.95rem; white-space: nowrap;
+  }
+  .star:hover { border-color: var(--stamp); }
+  .star svg { width: 16px; height: 16px; color: var(--stamp); }
+  .star .count { font-family: var(--mono); color: var(--ink-2); }
+  .lede { margin: 0 0 28px; font-size: 1.2rem; color: var(--ink-2); max-width: 40ch; }
+
+  /* Tool */
+  .tool { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 24px; }
+  .kinds { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
+  .kinds button { font: 600 1rem var(--mono); color: var(--ink-2); background: transparent; border: 0; padding: 9px 20px; cursor: pointer; }
+  .kinds button + button { border-left: 1px solid var(--rule); }
+  .kinds button:hover { color: var(--ink); }
+  .kinds button[aria-selected="true"] { background: var(--stamp); color: var(--sheet); }
+  .kinds button:focus-visible { outline-offset: -3px; }
+
+  .field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+  .field-head label { font-size: 0.95rem; color: var(--ink-2); }
+  .counter { font: 0.9rem var(--mono); color: var(--ink-2); }
+  .counter.done { color: var(--ink); }
+  .input-wrap { position: relative; }
+  input#code {
+    width: 100%; font: 400 1.6rem/1.2 var(--mono); letter-spacing: 0.06em; color: var(--ink);
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 52px 14px 16px;
+  }
+  input#code::placeholder { color: var(--ink-2); opacity: 0.55; letter-spacing: 0.02em; }
+  input#code:focus-visible { outline-offset: 0; }
+  input#code[aria-invalid="true"] { border-color: var(--bad); }
+  .clear {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent;
+    color: var(--ink-2); cursor: pointer; font-size: 1.4rem; line-height: 1;
+  }
+  .clear:hover { background: var(--stamp-soft); color: var(--ink); }
+  .clear[hidden] { display: none; }
+
+  .examples { margin: 10px 0 0; font-size: 0.95rem; color: var(--ink-2); }
+  .examples button {
+    font: 0.95rem var(--mono); color: var(--stamp); background: none; border: 0;
+    padding: 2px 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+  }
+  .switched { margin: 10px 0 0; font-size: 0.95rem; color: var(--stamp); }
+  .switched:empty { display: none; }
+
+  /* Specimen */
+  .result { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; margin-top: 28px; }
+  .specimen { display: flex; flex-wrap: wrap; gap: 14px 14px; min-height: 76px; }
+  .seg { display: flex; flex-direction: column; align-items: flex-start; min-width: 2.2ch; }
+  .seg .digits { font: 400 1.75rem/1 var(--mono); padding: 0 1px 8px; white-space: pre; border-bottom: 3px solid var(--stamp); }
+  .seg .digits .empty { color: var(--rule); }
+  .seg .name { margin-top: 6px; font-size: 0.85rem; font-style: italic; color: var(--ink-2); white-space: nowrap; }
+  .seg .meaning { font-size: 0.95rem; white-space: nowrap; }
+  .seg.bad .digits { border-color: var(--bad); color: var(--bad); }
+  .seg.check-ok .digits { border-color: var(--ok); color: var(--ok); }
+
+  .stamp { width: 96px; height: 96px; color: var(--ok); opacity: 0; }
+  .stamp.on { opacity: 1; }
+  .stamp:not(.on) { display: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .stamp.on { animation: press 380ms cubic-bezier(.2, .9, .3, 1.2); }
+    @keyframes press {
+      from { opacity: 0; transform: scale(1.7) rotate(-24deg); }
+      to { opacity: 1; transform: scale(1) rotate(0); }
+    }
+  }
+
+  .status { margin: 18px 0 0; font-size: 1.05rem; min-height: 1.6em; }
+  .status.ok { color: var(--ok); }
+  .status.bad { color: var(--bad); }
+  .status .hint { display: block; color: var(--ink-2); font-size: 0.95rem; }
+
+  /* Disclosures */
+  details { margin-top: 16px; border-top: 1px solid var(--rule); padding-top: 12px; }
+  details[hidden] { display: none; }
+  summary { cursor: pointer; font-weight: 600; color: var(--ink); list-style-position: outside; }
+  summary::marker { color: var(--stamp); }
+  details p { margin: 10px 0; font-size: 0.98rem; }
+  .math { overflow-x: auto; margin: 12px 0 4px; }
+  .math table { border-collapse: collapse; font: 1rem var(--mono); }
+  .math th { font: italic 0.85rem var(--serif); color: var(--ink-2); text-align: left; padding: 4px 12px 4px 0; white-space: nowrap; }
+  .math td { text-align: center; padding: 4px 6px; min-width: 2.1em; }
+  .math tr.products td { border-top: 1px solid var(--rule); }
+  .math td.hl { color: var(--stamp); font-weight: 600; }
+  .steps { margin: 8px 0 0; padding-left: 1.3em; font-size: 0.98rem; }
+  .steps li { margin: 4px 0; }
+  .steps code, details code { font-family: var(--mono); font-size: 0.92em; word-break: break-all; }
+
+  .json { position: relative; }
+  pre {
+    position: relative; margin: 12px 0; padding: 16px; overflow-x: auto;
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 6px;
+    font: 0.92rem/1.55 var(--mono);
+  }
+  .copy {
+    position: absolute; top: 8px; right: 8px; font: 0.85rem var(--serif); color: var(--ink-2);
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 3px 10px; cursor: pointer;
+  }
+  .copy:hover { color: var(--ink); border-color: var(--stamp); }
+
+  .privacy { display: flex; gap: 8px; align-items: flex-start; margin: 20px 0 0; font-size: 0.9rem; color: var(--ink-2); }
+  .privacy svg { flex: none; width: 16px; height: 16px; margin-top: 4px; }
+
+  /* Developer section */
+  h2 { font-size: 1.6rem; margin: 56px 0 8px; letter-spacing: -0.01em; }
+  .dev pre { background: var(--sheet); }
+  .checks { padding-left: 1.2em; }
+  .checks li { margin: 6px 0; }
+  code { font-family: var(--mono); font-size: 0.92em; }
+
+  footer {
+    margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-size: 0.95rem; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between;
+  }
+
+  @media (max-width: 560px) {
+    main { padding-top: 20px; }
+    .top { margin-bottom: 24px; }
+    .brand h1 { font-size: 2.2rem; }
+    .brand svg { width: 44px; height: 44px; }
+    .star .label { display: none; }
+    .tool { padding: 18px 14px; }
+    .kinds { display: flex; }
+    .kinds button { flex: 1; padding: 10px 0; }
+    input#code { font-size: 1.25rem; padding-right: 48px; }
+    .result { grid-template-columns: 1fr; }
+    .stamp { width: 72px; height: 72px; justify-self: end; margin-top: -8px; }
+    .seg .digits { font-size: 1.45rem; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="stamp-mark" viewBox="0 0 120 120">
+    <g transform="rotate(-10 60 60)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="60" cy="60" r="52" stroke-width="5"/>
+      <circle cx="60" cy="60" r="42" stroke-width="1.6"/>
+      <circle cx="60" cy="60" r="47" stroke-width="2.4" stroke-dasharray="0.1 6.052"/>
+      <path d="M37 61 L53 77 L84 44" stroke-width="9"/>
+    </g>
+  </symbol>
+  <symbol id="star-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></symbol>
+  <symbol id="lock-icon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></symbol>
+</svg>
+
+<main>
+  <header class="top">
+    <a class="brand" href="./" aria-label="ValidRO, pagina principală">
+      <svg aria-hidden="true"><use href="#stamp-mark"/></svg>
+      <h1>ValidRO</h1>
+    </a>
+    <a class="star" href="https://github.com/Robert-GeorgeDev/ValidRO" aria-label="Dă o steluță pe GitHub">
+      <svg aria-hidden="true"><use href="#star-icon"/></svg>
+      <span class="label">Steluță pe GitHub</span>
+      <span class="count" id="stars" hidden></span>
+    </a>
+  </header>
+
+  <p class="lede">Verifică un CNP, un CUI sau un IBAN, vezi ce înseamnă fiecare cifră și cum se calculează cifra de control.</p>
+
+  <section class="tool" aria-label="Verificare">
+    <div class="kinds" role="tablist" aria-label="Ce verifici">
+      <button role="tab" id="tab-cnp" aria-selected="true" aria-controls="panel" data-kind="cnp">CNP</button>
+      <button role="tab" id="tab-cui" aria-selected="false" aria-controls="panel" data-kind="cui" tabindex="-1">CUI</button>
+      <button role="tab" id="tab-iban" aria-selected="false" aria-controls="panel" data-kind="iban" tabindex="-1">IBAN</button>
+    </div>
+
+    <div id="panel" role="tabpanel" aria-labelledby="tab-cnp">
+      <div class="field-head">
+        <label for="code" id="field-label">Codul numeric personal</label>
+        <span class="counter" id="counter" aria-hidden="true"></span>
+      </div>
+      <div class="input-wrap">
+        <input id="code" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="status">
+        <button class="clear" id="clear" type="button" aria-label="Șterge" hidden>×</button>
+      </div>
+      <p class="switched" id="switched" role="status"></p>
+      <p class="examples" id="examples"></p>
+
+      <div class="result">
+        <div class="specimen" id="specimen" aria-hidden="true"></div>
+        <svg class="stamp" id="stamp" role="img" aria-label="Valid"><use href="#stamp-mark"/></svg>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+
+      <details id="math" hidden>
+        <summary>Cum s-a calculat cifra de control</summary>
+        <div id="math-body"></div>
+      </details>
+
+      <details id="json" hidden>
+        <summary>Rezultatul pentru dezvoltatori</summary>
+        <div class="json">
+          <pre><code id="json-code"></code></pre>
+          <button class="copy" type="button" id="json-copy">Copiază</button>
+        </div>
+      </details>
+
+      <p class="privacy">
+        <svg aria-hidden="true"><use href="#lock-icon"/></svg>
+        <span>Verificarea rulează în browserul tău. Nimic din ce scrii nu e trimis și nu rămâne salvat.</span>
+      </p>
+    </div>
+  </section>
+
+  <section class="dev">
+    <h2>Pentru dezvoltatori</h2>
+    <p>Aceleași verificări, ca bibliotecă TypeScript fără dependențe.</p>
+    <pre><code>npm install validro</code><button class="copy" type="button" data-copy="npm install validro">Copiază</button></pre>
+    <pre><code>import { validateCnp } from "validro";
+
+validateCnp("3000101221148");
+// { valid: false, data: null,
+//   error: "Cifra de control este greșită (așteptat 7)" }</code></pre>
+
+    <ul class="checks">
+      <li><strong>CNP:</strong> dată reală (inclusiv ani bisecți), cod de județ, inclusiv codul 70 folosit pentru CNP-urile noi, cifra de control.</li>
+      <li><strong>CUI / CIF:</strong> cu sau fără prefixul RO, cifra de control.</li>
+      <li><strong>IBAN:</strong> structura românească de 24 de caractere și verificarea mod 97.</li>
+    </ul>
+    <p>Un cod valid e corect ca formă; asta nu înseamnă că aparține cuiva. Exemplele de pe pagină sunt fictive.</p>
+  </section>
+
+  <footer>
+    <span><a href="https://github.com/Robert-GeorgeDev/ValidRO">Codul sursă pe GitHub</a> · licență MIT</span>
+    <span>Ai găsit un cod tratat greșit? <a href="https://github.com/Robert-GeorgeDev/ValidRO/issues/new/choose">Deschide un issue</a>.</span>
+  </footer>
+</main>
+
+<script type="module">
+  import { validateCnp, validateCui, validateIbanRo } from "./lib/index.js";
+
+  const REPO = "Robert-GeorgeDev/ValidRO";
+  const MONTHS = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie",
+    "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
+  const SEX = {
+    1: "bărbat, 1900–1999", 2: "femeie, 1900–1999", 3: "bărbat, 1800–1899", 4: "femeie, 1800–1899",
+    5: "bărbat, 2000–2099", 6: "femeie, 2000–2099", 7: "rezident străin", 8: "rezidentă străină", 9: "cetățean străin",
+  };
+  const NAMES = { cnp: "CNP", cui: "CUI", iban: "IBAN" };
+
+  /* Weighted-sum explanation shared by CNP and CUI */
+  function weightedTable(digits, key, products) {
+    const row = (cls, label, cells, hl) =>
+      `<tr class="${cls}"><th scope="row">${label}</th>${cells.map((c, i) => `<td${hl && hl(i) ? ' class="hl"' : ""}>${c}</td>`).join("")}</tr>`;
+    return `<div class="math"><table>
+      ${row("", "cifre", digits)}
+      ${row("", "× cheia", key)}
+      ${row("products", "produs", products)}
+    </table></div>`;
+  }
+
+  const KINDS = {
+    cnp: {
+      label: "Codul numeric personal",
+      placeholder: "13 cifre, de ex. 3000101221147",
+      inputmode: "numeric",
+      examples: [["3000101221147", "valid"], ["4991231700016", "cod de județ 70"], ["3000101221148", "cifră de control greșită"]],
+      clean: (v) => v.replace(/\D/g, "").slice(0, 13),
+      total: 13,
+      complete: (v) => v.length === 13,
+      validate: validateCnp,
+      segments(v, r) {
+        const parts = [[0, 1, "sex și secol"], [1, 3, "an"], [3, 5, "lună"], [5, 7, "zi"], [7, 9, "județ"], [9, 12, "nr. de ordine"], [12, 13, "control"]];
+        const d = r?.valid ? r.data : null;
+        const meanings = d ? [SEX[v[0]], d.birthDate.slice(0, 4), MONTHS[Number(v.slice(3, 5)) - 1],
+          String(Number(v.slice(5, 7))), d.county, "nr. " + v.slice(9, 12), "corectă"] : [];
+        return parts.map(([a, b, name], i) => ({ text: v.slice(a, b), size: b - a, name, meaning: meanings[i] }));
+      },
+      badSegments(error) {
+        if (/Prima cifră/.test(error)) return [0];
+        if (/Data nașterii/.test(error)) return [1, 2, 3];
+        if (/județ/.test(error)) return [4];
+        if (/ordine/.test(error)) return [5];
+        if (/control/.test(error)) return [6];
+        return [];
+      },
+      math(v) {
+        if (!/^\d{13}$/.test(v)) return null;
+        const key = "279146358279".split("").map(Number);
+        const d = v.slice(0, 12).split("").map(Number);
+        const p = d.map((x, i) => x * key[i]);
+        const sum = p.reduce((a, b) => a + b, 0);
+        const rest = sum % 11;
+        const control = rest === 10 ? 1 : rest;
+        return `<p>Primele 12 cifre se înmulțesc, pe rând, cu cheia <code>279146358279</code>.</p>
+          ${weightedTable(d, key, p)}
+          <ol class="steps">
+            <li>Suma produselor: <code>${sum}</code></li>
+            <li>Restul împărțirii la 11: <code>${sum} mod 11 = ${rest}</code></li>
+            <li>${rest === 10 ? "Restul e 10, deci cifra de control e <code>1</code>." : `Cifra de control e restul: <code>${control}</code>.`}
+              ${Number(v[12]) === control ? "Se potrivește cu ultima cifră." : `Ultima cifră scrisă e <code>${v[12]}</code>, deci nu se potrivește.`}</li>
+          </ol>`;
+      },
+    },
+    cui: {
+      label: "Codul unic de înregistrare al firmei",
+      placeholder: "2–10 cifre, cu sau fără RO",
+      inputmode: "text",
+      examples: [["RO12345674", "valid, plătitor de TVA"], ["12345674", "valid"], ["12345675", "cifră de control greșită"]],
+      clean: (v) => {
+        const up = v.toUpperCase().replace(/[^0-9RO]/g, "");
+        const ro = up.startsWith("RO") ? "RO" : "";
+        return ro + up.slice(ro.length).replace(/\D/g, "").slice(0, 10);
+      },
+      total: null,
+      complete: (v) => v.replace(/^RO/, "").length >= 2,
+      validate: validateCui,
+      segments(v, r) {
+        const ro = v.startsWith("RO");
+        const num = ro ? v.slice(2) : v;
+        const segs = [];
+        if (ro) segs.push({ text: "RO", size: 2, name: "prefix", meaning: "plătitor de TVA" });
+        segs.push({ text: num.slice(0, -1), size: Math.max(num.length - 1, 1), name: "număr", meaning: r?.valid ? "înregistrare" : undefined });
+        segs.push({ text: num.slice(-1), size: 1, name: "control", meaning: r?.valid ? "corectă" : undefined });
+        return segs;
+      },
+      badSegments: (error) => (/control/.test(error) ? ["last"] : []),
+      math(v) {
+        const num = v.replace(/^RO/, "");
+        if (!/^[1-9]\d{1,9}$/.test(num)) return null;
+        const body = num.slice(0, -1).padStart(9, "0");
+        const key = "753217532".split("").map(Number);
+        const d = body.split("").map(Number);
+        const p = d.map((x, i) => x * key[i]);
+        const sum = p.reduce((a, b) => a + b, 0);
+        const rest = (sum * 10) % 11;
+        const control = rest === 10 ? 0 : rest;
+        return `<p>Numărul fără ultima cifră se completează cu zerouri în față până la 9 cifre, apoi fiecare cifră se înmulțește cu cheia <code>753217532</code>.</p>
+          ${weightedTable(d, key, p)}
+          <ol class="steps">
+            <li>Suma produselor: <code>${sum}</code></li>
+            <li>Suma × 10, restul la 11: <code>${sum * 10} mod 11 = ${rest}</code></li>
+            <li>${rest === 10 ? "Restul e 10, deci cifra de control e <code>0</code>." : `Cifra de control e restul: <code>${control}</code>.`}
+              ${Number(num.slice(-1)) === control ? "Se potrivește cu ultima cifră." : `Ultima cifră scrisă e <code>${num.slice(-1)}</code>, deci nu se potrivește.`}</li>
+          </ol>`;
+      },
+    },
+    iban: {
+      label: "Contul IBAN",
+      placeholder: "RO + 22 de caractere",
+      inputmode: "text",
+      examples: [["RO49 AAAA 1B31 0075 9384 0000", "valid, exemplul oficial"], ["RO48 AAAA 1B31 0075 9384 0000", "cifre de control greșite"]],
+      clean: (v) => v.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 24),
+      total: 24,
+      complete: (v) => v.length === 24,
+      validate: validateIbanRo,
+      segments(v, r) {
+        const acc = v.slice(8, 24).replace(/(.{4})(?=.)/g, "$1 ");
+        const d = r?.valid ? r.data : null;
+        return [
+          { text: v.slice(0, 2), size: 2, name: "țara", meaning: d ? "România" : undefined },
+          { text: v.slice(2, 4), size: 2, name: "control", meaning: d ? "corecte" : undefined },
+          { text: v.slice(4, 8), size: 4, name: "banca", meaning: d ? (d.treasury ? "Trezorerie" : d.bankCode) : undefined },
+          { text: acc, size: 19, name: "cont", meaning: d ? "16 caractere" : undefined },
+        ];
+      },
+      badSegments(error) {
+        if (/înceapă cu RO/.test(error)) return [0];
+        if (/control/.test(error)) return [1];
+        return [];
+      },
+      math(v) {
+        if (!/^RO\d{2}[A-Z]{4}[A-Z0-9]{16}$/.test(v)) return null;
+        const moved = v.slice(4) + v.slice(0, 4);
+        const numeric = moved.split("").map((c) => (/[A-Z]/.test(c) ? String(c.charCodeAt(0) - 55) : c)).join("");
+        let rest = 0;
+        for (const ch of numeric) rest = (rest * 10 + Number(ch)) % 97;
+        return `<p>IBAN-ul folosește verificarea mod 97 din standardul ISO 13616.</p>
+          <ol class="steps">
+            <li>Primele 4 caractere se mută la final: <code>${moved}</code></li>
+            <li>Fiecare literă devine un număr (A = 10, B = 11 … Z = 35): <code>${numeric}</code></li>
+            <li>Restul împărțirii acestui număr la 97: <code>${rest}</code></li>
+            <li>${rest === 1 ? "Restul e 1, deci cifrele de control sunt corecte." : "Restul trebuie să fie 1, deci cifrele de control sunt greșite."}</li>
+          </ol>`;
+      },
+    },
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const input = $("code"), specimen = $("specimen"), status = $("status"), stamp = $("stamp");
+  const tabs = [...document.querySelectorAll(".kinds button")];
+  let kind = "cnp";
+  let wasValid = false;
+  let lastResult = null;
+
+  function detectKind(raw) {
+    const v = raw.toUpperCase().replace(/[\s.\-]/g, "");
+    if (/^RO\d{2}[A-Z]{4}/.test(v)) return "iban";
+    if (/^\d{13}$/.test(v)) return "cnp";
+    if (/^(RO)?\d{2,10}$/.test(v)) return "cui";
+    return null;
+  }
+
+  function render() {
+    const k = KINDS[kind];
+    const v = k.clean(input.value);
+    const complete = Boolean(v) && k.complete(v);
+    const r = complete ? k.validate(v) : null;
+    lastResult = r;
+
+    // counter + clear button
+    const counted = kind === "cui" ? v.replace(/^RO/, "").length : v.length;
+    $("counter").textContent = v ? (k.total ? `${counted} / ${k.total}` : `${counted} cifre`) : "";
+    $("counter").className = "counter" + (complete ? " done" : "");
+    $("clear").hidden = !input.value;
+
+    // specimen
+    const segs = k.segments(v, r);
+    const bad = (r && !r.valid ? k.badSegments(r.error) : []).map((i) => (i === "last" ? segs.length - 1 : i));
+    specimen.replaceChildren(...segs.map((s, i) => {
+      const el = document.createElement("div");
+      el.className = "seg" + (bad.includes(i) ? " bad" : "") + (r?.valid && s.name === "control" ? " check-ok" : "");
+      const digits = document.createElement("span");
+      digits.className = "digits";
+      digits.textContent = s.text;
+      const missing = Math.max(s.size - s.text.length, 0);
+      if (missing && !r) {
+        const empty = document.createElement("span");
+        empty.className = "empty";
+        empty.textContent = "·".repeat(missing);
+        digits.append(empty);
+      }
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = s.name;
+      el.append(digits, name);
+      if (s.meaning) {
+        const m = document.createElement("span");
+        m.className = "meaning";
+        m.textContent = s.meaning;
+        el.append(m);
+      }
+      return el;
+    }));
+
+    // status
+    status.className = "status";
+    input.removeAttribute("aria-invalid");
+    if (!v) {
+      status.textContent = "";
+    } else if (!r) {
+      const left = k.total ? k.total - v.length : null;
+      status.textContent = left ? `Mai ai ${left} ${left === 1 ? "caracter" : "caractere"}.` : "Continuă să scrii.";
+    } else if (r.valid) {
+      status.className = "status ok";
+      status.textContent = `${NAMES[kind]} valid.`;
+    } else {
+      status.className = "status bad";
+      input.setAttribute("aria-invalid", "true");
+      status.textContent = r.error + ".";
+    }
+
+    // explanations
+    const math = r ? k.math(v) : null;
+    $("math").hidden = !math;
+    $("math-body").innerHTML = math || "";
+    $("json").hidden = !r;
+    $("json-code").textContent = r ? JSON.stringify(r, null, 2) : "";
+
+    // stamp
+    const isValid = Boolean(r?.valid);
+    if (isValid && !wasValid) {
+      stamp.classList.remove("on");
+      void stamp.getBoundingClientRect();
+      stamp.classList.add("on");
+    } else if (!isValid) {
+      stamp.classList.remove("on");
+    }
+    wasValid = isValid;
+  }
+
+  function setKind(next, { keepValue = false } = {}) {
+    kind = next;
+    const k = KINDS[kind];
+    tabs.forEach((b) => {
+      const on = b.dataset.kind === kind;
+      b.setAttribute("aria-selected", String(on));
+      b.tabIndex = on ? 0 : -1;
+    });
+    $("panel").setAttribute("aria-labelledby", "tab-" + kind);
+    $("field-label").textContent = k.label;
+    input.placeholder = k.placeholder;
+    input.setAttribute("inputmode", k.inputmode);
+    if (!keepValue) input.value = "";
+    $("examples").replaceChildren("Încearcă: ", ...k.examples.flatMap(([code, note], i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = code;
+      b.title = note;
+      b.setAttribute("aria-label", `${code}, ${note}`);
+      b.addEventListener("click", () => { input.value = code; $("switched").textContent = ""; render(); input.focus(); });
+      return i ? [", ", b] : [b];
+    }));
+    wasValid = false;
+    render();
+  }
+
+  tabs.forEach((b, i) => {
+    b.addEventListener("click", () => { $("switched").textContent = ""; setKind(b.dataset.kind); input.focus(); });
+    b.addEventListener("keydown", (e) => {
+      const move = { ArrowRight: 1, ArrowLeft: -1, Home: -i, End: tabs.length - 1 - i }[e.key];
+      if (move === undefined) return;
+      e.preventDefault();
+      const next = tabs[(i + move + tabs.length) % tabs.length];
+      next.focus();
+      $("switched").textContent = "";
+      setKind(next.dataset.kind);
+    });
+  });
+
+  input.addEventListener("input", render);
+  input.addEventListener("paste", (e) => {
+    const text = (e.clipboardData || window.clipboardData)?.getData("text") ?? "";
+    const guess = detectKind(text);
+    if (guess && guess !== kind) {
+      e.preventDefault();
+      input.value = text.trim();
+      setKind(guess, { keepValue: true });
+      $("switched").textContent = `Am trecut pe ${NAMES[guess]}, pentru că ai lipit un ${NAMES[guess]}.`;
+    } else {
+      $("switched").textContent = "";
+    }
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && input.value) { input.value = ""; render(); }
+  });
+  $("clear").addEventListener("click", () => { input.value = ""; $("switched").textContent = ""; render(); input.focus(); });
+
+  async function copy(button, text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = "Copiat";
+    } catch {
+      button.textContent = "Selectează și copiază manual";
+    }
+    setTimeout(() => (button.textContent = "Copiază"), 1600);
+  }
+  document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () => copy(b, b.dataset.copy)));
+  $("json-copy").addEventListener("click", (e) => copy(e.currentTarget, $("json-code").textContent));
+
+  // Live star count; the link works the same if the request fails.
+  fetch(`https://api.github.com/repos/${REPO}`)
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (data && typeof data.stargazers_count === "number") {
+        const el = $("stars");
+        el.textContent = data.stargazers_count.toLocaleString("ro-RO");
+        el.hidden = false;
+      }
+    })
+    .catch(() => {});
+
+  setKind("cnp");
+</script>
+</body>
+</html>
