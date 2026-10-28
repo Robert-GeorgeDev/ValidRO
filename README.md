@@ -13,7 +13,7 @@
   <a href="https://robert-georgedev.github.io/ValidRO/"><strong>Try it in your browser</strong></a>
 </p>
 
-Validate and decode Romanian identifiers (**CNP**, **CUI/CIF**, **IBAN** and postal codes) with error messages you can show directly to users. Zero dependencies, fully typed, runs in Node and in the browser.
+Validate and decode Romanian identifiers (**CNP**, **CUI/CIF**, **IBAN**, phone numbers and postal codes) with error messages you can show directly to users. Zero dependencies, fully typed, runs in Node and in the browser.
 
 ```bash
 npm install github:Robert-GeorgeDev/ValidRO
@@ -31,7 +31,7 @@ The package is not on the npm registry yet; this installs it straight from GitHu
 ## Usage
 
 ```ts
-import { validateCnp, validateCui, validateIbanRo } from "validro";
+import { validateCnp, validateCui, validateIbanRo, validatePhoneRo } from "validro";
 
 validateCnp("3000101221147");
 // {
@@ -51,6 +51,12 @@ validateIbanRo("ro49 aaaa 1b31 0075 9384 0000");
 // { valid: true, error: null,
 //   data: { iban: "RO49AAAA1B31007593840000", formatted: "RO49 AAAA 1B31 0075 9384 0000",
 //           bankCode: "AAAA", treasury: false } }
+
+validatePhoneRo("0723 456 789");
+// { valid: true, error: null, data: { normalized: "+40723456789" } }
+
+validatePhoneRo("0040723456789");
+// { valid: true, error: null, data: { normalized: "+40723456789" } }
 ```
 
 Every `validate*` function returns the same shape, so you can handle all of them the same way:
@@ -61,7 +67,7 @@ type ValidationResult<T> =
   | { valid: false; error: string; data: null };
 ```
 
-Only need true or false? Use `isValidCnp`, `isValidCui`, `isValidIbanRo` and `isValidPostalCode`.
+Only need true or false? Use `isValidCnp`, `isValidCui`, `isValidIbanRo`, `isValidPostalCode` and `isValidPhoneRo`.
 
 ## API
 
@@ -71,7 +77,8 @@ Only need true or false? Use `isValidCnp`, `isValidCui`, `isValidIbanRo` and `is
 | `validateCui(cui)` | `ValidationResult<CuiInfo>` |
 | `validateIbanRo(iban)` | `ValidationResult<IbanInfo>` |
 | `validatePostalCode(postalCode)` | `ValidationResult<PostalCodeInfo>`; exactly 6 digits |
-| `isValidCnp`, `isValidCui`, `isValidIbanRo`, `isValidPostalCode` | `boolean` |
+| `validatePhoneRo(phone)` | `ValidationResult<PhoneRoInfo>`; `data.normalized` is in E.164 format |
+| `isValidCnp`, `isValidCui`, `isValidIbanRo`, `isValidPostalCode`, `isValidPhoneRo` | `boolean` |
 | `cnpControlDigit(first12)` | the CNP control digit |
 | `cuiControlDigit(body)` | the CUI control digit |
 | `ibanChecksumOk(iban)` | mod-97 check, works for any country |
@@ -85,6 +92,7 @@ Only need true or false? Use `isValidCnp`, `isValidCui`, `isValidIbanRo` and `is
 | CUI / CIF | optional `RO` prefix, 2–10 digits, no leading zero, control digit (key `753217532`) |
 | IBAN (RO) | 24 characters: `RO`, 2 check digits, 4-letter bank code, 16 alphanumerics, ISO 13616 mod-97 |
 | Postal code | exactly 6 digits |
+| Phone (RO) | Romanian mobile (`07`) and landline (`02` / `03`) formats; accepts national, `+40` and `0040` prefixes; normalizes to `+40` E.164 |
 
 Spaces, dots and dashes in the input are ignored.
 
@@ -103,7 +111,7 @@ All examples in this repository are fictitious: sample CNPs use birth dates in t
 ## Roadmap
 
 - [ ] Romanian licence plates
-- [ ] Phone numbers, normalized to `+40`
+- [x] Phone numbers, normalized to `+40`
 - [x] Postal codes
 - [ ] Python port
 

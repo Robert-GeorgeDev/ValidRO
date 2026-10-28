@@ -6,5 +6,7 @@ export { validateIbanRo, isValidIbanRo, ibanChecksumOk } from "./iban.js";
 export type { IbanInfo } from "./iban.js";
 export { validatePostalCode, isValidPostalCode } from "./postal-code.js";
 export type { PostalCodeInfo } from "./postal-code.js";
+export { validatePhoneRo, isValidPhoneRo } from "./phone-ro.js";
+export type { PhoneRoInfo } from "./phone-ro.js";
 export { CNP_COUNTIES } from "./counties.js";
 export type { ValidationResult } from "./result.js";

@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- `validatePhoneRo` / `isValidPhoneRo` for Romanian mobile and landline numbers, normalized to E.164
+
 ## [0.1.0] - 2026-10-27
 
 ### Added
