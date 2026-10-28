@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- `validatePlate` / `isValidPlate` for Romanian registration plates, including county lookup and input normalization
+
 ## [0.1.0] - 2026-10-27
 
 ### Added

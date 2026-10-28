@@ -13,7 +13,7 @@
   <a href="https://robert-georgedev.github.io/ValidRO/"><strong>Try it in your browser</strong></a>
 </p>
 
-Validate and decode Romanian identifiers (**CNP**, **CUI/CIF**, **IBAN** and postal codes) with error messages you can show directly to users. Zero dependencies, fully typed, runs in Node and in the browser.
+Validate and decode Romanian identifiers (**CNP**, **CUI/CIF**, **IBAN**, postal codes and licence plates) with error messages you can show directly to users. Zero dependencies, fully typed, runs in Node and in the browser.
 
 ```bash
 npm install github:Robert-GeorgeDev/ValidRO
@@ -25,13 +25,13 @@ The package is not on the npm registry yet; this installs it straight from GitHu
 
 - **Current rules.** Accepts county code `70`, which the civil-status system (SIIEASC) now assigns to newly generated CNPs. Many older validators reject these valid codes.
 - **Explains the error.** Messages are in Romanian and say what is wrong: `Cifra de control este greșită (așteptat 7)`.
-- **Decodes, not just validates.** Sex, birth date, county, bank code.
+- **Decodes, not just validates.** Sex, birth date, county, bank code and plate county.
 - **Private.** Everything runs locally. Nothing is sent anywhere.
 
 ## Usage
 
 ```ts
-import { validateCnp, validateCui, validateIbanRo } from "validro";
+import { validateCnp, validateCui, validateIbanRo, validatePlate } from "validro";
 
 validateCnp("3000101221147");
 // {
@@ -51,6 +51,12 @@ validateIbanRo("ro49 aaaa 1b31 0075 9384 0000");
 // { valid: true, error: null,
 //   data: { iban: "RO49AAAA1B31007593840000", formatted: "RO49 AAAA 1B31 0075 9384 0000",
 //           bankCode: "AAAA", treasury: false } }
+
+validatePlate("cj-12 abc");
+// { valid: true, error: null, data: { plate: "CJ12ABC", countyCode: "CJ", county: "Cluj" } }
+
+validatePlate("B 123 ABC");
+// { valid: true, error: null, data: { plate: "B123ABC", countyCode: "B", county: "București" } }
 ```
 
 Every `validate*` function returns the same shape, so you can handle all of them the same way:
@@ -61,7 +67,7 @@ type ValidationResult<T> =
   | { valid: false; error: string; data: null };
 ```
 
-Only need true or false? Use `isValidCnp`, `isValidCui`, `isValidIbanRo` and `isValidPostalCode`.
+Only need true or false? Use `isValidCnp`, `isValidCui`, `isValidIbanRo`, `isValidPostalCode` and `isValidPlate`.
 
 ## API
 
@@ -71,11 +77,13 @@ Only need true or false? Use `isValidCnp`, `isValidCui`, `isValidIbanRo` and `is
 | `validateCui(cui)` | `ValidationResult<CuiInfo>` |
 | `validateIbanRo(iban)` | `ValidationResult<IbanInfo>` |
 | `validatePostalCode(postalCode)` | `ValidationResult<PostalCodeInfo>`; exactly 6 digits |
-| `isValidCnp`, `isValidCui`, `isValidIbanRo`, `isValidPostalCode` | `boolean` |
+| `validatePlate(plate)` | `ValidationResult<PlateInfo>`; normalized plate and county details |
+| `isValidCnp`, `isValidCui`, `isValidIbanRo`, `isValidPostalCode`, `isValidPlate` | `boolean` |
 | `cnpControlDigit(first12)` | the CNP control digit |
 | `cuiControlDigit(body)` | the CUI control digit |
 | `ibanChecksumOk(iban)` | mod-97 check, works for any country |
-| `CNP_COUNTIES` | county codes and names |
+| `CNP_COUNTIES` | county codes and names for CNPs |
+| `PLATE_COUNTIES` | registration-plate county codes and names |
 
 ## What is checked
 
@@ -85,6 +93,7 @@ Only need true or false? Use `isValidCnp`, `isValidCui`, `isValidIbanRo` and `is
 | CUI / CIF | optional `RO` prefix, 2–10 digits, no leading zero, control digit (key `753217532`) |
 | IBAN (RO) | 24 characters: `RO`, 2 check digits, 4-letter bank code, 16 alphanumerics, ISO 13616 mod-97 |
 | Postal code | exactly 6 digits |
+| Licence plate | known Romanian county code, 2 digits and 3 letters; București (`B`) accepts 2 or 3 digits; spaces, dots and dashes are ignored |
 
 Spaces, dots and dashes in the input are ignored.
 
@@ -102,7 +111,7 @@ All examples in this repository are fictitious: sample CNPs use birth dates in t
 
 ## Roadmap
 
-- [ ] Romanian licence plates
+- [x] Romanian licence plates
 - [ ] Phone numbers, normalized to `+40`
 - [x] Postal codes
 - [ ] Python port
