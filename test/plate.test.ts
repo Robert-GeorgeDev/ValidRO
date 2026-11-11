@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isValidPlate, validatePlate } from "../src/index.js";
+import { PLATE_COUNTIES, isValidPlate, validatePlate } from "../src/index.js";
 
 describe("validatePlate", () => {
   it("accepts county and Bucharest plates and returns county data", () => {
@@ -23,6 +23,11 @@ describe("validatePlate", () => {
       county: "Cluj",
     });
     expect(validatePlate("b.123.abc").data?.plate).toBe("B123ABC");
+  });
+
+  it("knows all 41 counties and Bucharest", () => {
+    expect(Object.keys(PLATE_COUNTIES).length).toBe(42);
+    expect(PLATE_COUNTIES.CJ).toBe("Cluj");
   });
 
   it("accepts known county codes", () => {

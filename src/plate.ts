@@ -13,6 +13,7 @@ export const PLATE_COUNTIES: Readonly<Record<string, string>> = Object.freeze({
   BZ: "Buzău",
   CS: "Caraș-Severin",
   CL: "Călărași",
+  CJ: "Cluj",
   CT: "Constanța",
   CV: "Covasna",
   DB: "Dâmbovița",
